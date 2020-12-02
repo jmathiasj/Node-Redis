@@ -27,7 +27,7 @@ app.get('/',function(req,res){
 
             client.hgetall('bookss', function(err,books){
        
-                console.log("done");
+                // console.log("done");
                 res.render('index',{ books:books, reply:reply});
                
                
@@ -79,7 +79,7 @@ app.post('/book/search', function(req, res, next){
 
   client.hgetall(id, function(err, obj){
     if(!obj){
-    	console.log('!obj');
+    	// console.log('!obj');
       res.render('search', {
         error: 'Book not found!!',books:''
       });
@@ -110,16 +110,14 @@ app.post('/book/delete/:id', function(req, res,){
     console.log(typeof client.hget('bookss','id'));
     client.hget('bookss','id',function(err,reply){
         if(id == reply){
-            console.log(reply)
-      console.log('there');
+            // console.log(reply)
+      // console.log('there');
         client.del('bookss')
-        res.render('index',{reply:0});
+       
         }
     })
-    // if(req.params.id.toString() == client.hget('bookss','id').id.toString() ){
   
-    // }
-    res.redirect('/');
+    res.redirect('/search');
   }); 
 app.listen(3000);
 console.log('Server Started on Port 3000');
