@@ -1,7 +1,7 @@
 <html>
     <head>
         <link rel="stylesheet" href="https://bootswatch.com/3/cerulean/bootstrap.min.css">
-        <title>Redis Tasks with node express</title>
+        <title>Books App</title>
 <!-- <style>
     .del:checked +span{
         color:red;
@@ -21,61 +21,44 @@
             <!-- <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
               </button> -->
-              <a class="navbar-brand" href="#">RedisTasks</a>
+              <a class="navbar-brand" href="#">Books App</a>
           </div>
         </div>
       </nav>
       <div class="container">
-        <form method="post" action="/task/add">
-            <label>Add Task</label>
-            <input type="text" name="task" placeholder="Add Task">
-            <input type="submit" value="submit">
-        </form>
-        <h3<%= title%></h3>
-        <form method="post" action="/task/delete">
-        <ul class="task-list">
-        <% tasks.forEach(function(task){%>
-        <li>
-            <label>
-                <input type="checkbox" name="tasks" class="del" value="<%= task %>">
-
-
-            <span><%= task %></span>
-            </label>
-        </li>
-
-
-        <% }) %>
-        </ul>
-        <input type="submit" value="Remove">
-        <br>
-        <br>
         <div class="well">
-        <h3>Next Business Call</h3>
-        Name:<%= call.name%><br>
-        Company:<%= call.company%><br>
-        Phone:<%= call.phone%><br>
-        Time:<%= call.time%><br>
+         <% if (reply === 1) { %>
+        <h3>Recently added Book</h3>
+        Book Name: <%= books.name%><br>
+        Author: <%= books.author%><br>
+        ID: <%= books.id%><br>
+        Cost: ₹<%= books.cost%><br>
         <br>
+        <% } else {%>
+            <h3>No Recent Books!!</h3>
+            <% } %>
     </div>
 
         </form>
         <div class="well">
-        <h3>Edit Next Call</h3>
-        <form method="post" action="/call/add">
-            <label>Contact Name</label><br>
-            <input type="text" name="name" placeholder="Task Name">
-            <br><br>
-            <label>Company</label><br>
-            <input type="text" name="company" placeholder="Company">
-            <br><br>
-            <label>Phone</label><br>
-            <input type="text" name="phone" placeholder="Phone">
-            <br><br>
-            <label>Day & Time</label><br>
-            <input type="text" name="time" placeholder="Time">
-            <br><br>
-            <input type="submit" value="Submit">
+        <h3>Add a New Book</h3>
+        <form method="post" action="/book/add">
+            <label>Book Name</label><br>
+            <input type="text" class="form-control" name="name" placeholder="Book Name" required>
+            <br>
+            <label>Author</label><br>
+            <input type="text"  class="form-control" name="author" placeholder="Author" required>
+            <br>
+            <label>ID</label><br>
+            <input type="text" class="form-control" name="id" placeholder="ID" required>
+            <br>
+            <label>Cost</label><br>
+            <input type="text" class="form-control" name="cost" placeholder="Cost in ₹" required>
+            <br>
+            <div class="text-center">
+            <input type="submit" style="margin:5px;padding-right:40px;padding-left:40px"; class="btn btn-primary" value="Add a Book">
+            <a href="/search"><input style="margin:5px"; class="btn btn-primary" value="Search Book"></a>
+        </div>
         </form>
     </div>
 </div>

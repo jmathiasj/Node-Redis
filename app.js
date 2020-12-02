@@ -20,67 +20,107 @@ app.use(express.static(path.join(__dirname,'public')));
 
 app.get('/',function(req,res){
 //  res.send('Welcome!');
-var title="Tasks";
-client.lrange('tasks',0,-1, function(err, reply){
-    client.hgetall('call', function(err,call){
-        res.render('index',{title:title,tasks:reply, call:call});
-    });
+
+
+    client.exists('bookss',function(err,reply){
+        if(reply===1){
+
+            client.hgetall('bookss', function(err,books){
+       
+                console.log("done");
+                res.render('index',{ books:books, reply:reply});
+               
+               
+           
+          
+        });
     
-
-});
-
-});
-app.post('/task/add',function(req,res){
-    var task = req.body.task;
-    if(task ===""){
-        res.redirect('/');  
-    }
-    else{
-    client.rpush('tasks',task, function(err,reply){
-
-if(err){
-    console.log(err);
-
-}
-console.log('Task Added..');
-res.redirect('/');
-    });
-    }
-});
-app.post('/task/delete', function(req,res){
-var tasksToDel=req.body.tasks;
-client.lrange('tasks',0, -1,function(err,tasks){
-    for(var i =0;i<tasks.length;i++){
-        if(tasksToDel.indexOf(tasks[i]) > -1){
-            client.lrem('tasks',0,tasks[i], function(){
-                if(err){
-                    console.log(err);
-                }
-            });
-
         }
-    }
-    res.redirect('/');
+        else{
+            console.log("empty");
+            res.render('index',{ reply:reply});
+        }
+
+    });
 
 
 });
-});
-app.post('/call/add', function(req,res){
-var newCall={};
-newCall.name=req.body.name;
-newCall.company=req.body.company;
-newCall.phone=req.body.phone;
-newCall.time=req.body.time;
-client.hmset('call',['name',newCall.name,'company', newCall.company, 'phone', newCall.phone, 'time', newCall.time], function(err, reply){
+
+
+
+
+app.post('/book/add', function(req,res){
+var newBook={};
+newBook.id = req.body.id
+newBook.name=req.body.name;
+newBook.author=req.body.author;
+newBook.cost=req.body.cost;
+client.hmset('bookss',['name',newBook.name,'author', newBook.author, 'id', newBook.id, 'cost', newBook.cost], function(err, reply){
 if(err){
     console.log(err);
 }
 console.log(reply);
-res.redirect('/');
+client.hmset(newBook.id, [
+    'name',newBook.name,'author', newBook.author, 'id', newBook.id, 'cost', newBook.cost
+  ], function(error, replyy){
+    if(err){
+      console.log(error);
+    }
+    console.log(replyy);
+    res.redirect('/');
+  });
 
 });
-
 });
+
+app.post('/book/search', function(req, res, next){
+	console.log(req.body);
+  let id = req.body.id;
+
+  client.hgetall(id, function(err, obj){
+    if(!obj){
+    	console.log('!obj');
+      res.render('search', {
+        error: 'Book not found!!',books:''
+      });
+    } else {
+    	// console.log('else')
+      obj.id = id;
+    	console.log(obj)
+
+      res.render('search', {
+        book: obj,books:'exists',error:''
+      });
+    }
+  });
+});
+
+
+app.get('/search', function(req, res){
+    res.render('search',{
+          error: '',
+          books:''
+        });
+  });
+
+app.post('/book/delete/:id', function(req, res,){
+    let id=req.params.id
+    client.del(req.params.id);
+    
+    console.log(typeof client.hget('bookss','id'));
+    client.hget('bookss','id',function(err,reply){
+        if(id == reply){
+            console.log(reply)
+      console.log('there');
+        client.del('bookss')
+        res.render('index',{reply:0});
+        }
+    })
+    // if(req.params.id.toString() == client.hget('bookss','id').id.toString() ){
+  
+    // }
+    res.redirect('/');
+  }); 
 app.listen(3000);
 console.log('Server Started on Port 3000');
 module.exports=app;
