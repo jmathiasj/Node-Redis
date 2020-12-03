@@ -9,6 +9,8 @@
 
 * Redis - Reference Link to install Redis locally: https://redis.io/topics/quickstart
 
+* Node.js - Reference Link to Node.js: https://nodejs.org/en/download/
+
 To start Redis
 > redis-server
 
