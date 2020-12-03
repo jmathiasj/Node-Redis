@@ -60,7 +60,7 @@ if(err){
     console.log(err);
 }
 console.log(reply);
-client.hmset(newBook.id, [
+client.hmset('book:'+newBook.id, [
     'name',newBook.name,'author', newBook.author, 'id', newBook.id, 'cost', newBook.cost
   ], function(error, replyy){
     if(err){
@@ -77,7 +77,7 @@ app.post('/book/search', function(req, res, next){
 	console.log(req.body);
   let id = req.body.id;
 
-  client.hgetall(id, function(err, obj){
+  client.hgetall('book:'+id, function(err, obj){
     if(!obj){
     	// console.log('!obj');
       res.render('search', {
@@ -105,7 +105,7 @@ app.get('/search', function(req, res){
 
 app.post('/book/delete/:id', function(req, res,){
     let id=req.params.id
-    client.del(req.params.id);
+    client.del('book:'+req.params.id);
     
     console.log(typeof client.hget('bookss','id'));
     client.hget('bookss','id',function(err,reply){
