@@ -27,3 +27,5 @@ To start Redis
 4)Access the Store Books Application on
  http://localhost:3000
 
+### Demo
+![](https://github.com/jmathiasj/Node-Redis/blob/master/NodeDummyApp.gif)
