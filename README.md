@@ -30,4 +30,4 @@ To start Redis
  http://localhost:3000
 
 ### Demo
-![](https://github.com/jmathiasj/Node-Redis/blob/master/NodeDummyApp.gif)
+![](https://github.com/jmathiasj/Node-Redis/blob/master/NodeApp.gif)
