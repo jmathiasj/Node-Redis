@@ -1,124 +1,145 @@
-var express=require('express');
-var path=require('path');
-var logger=require('morgan');
-var bodyParser=require('body-parser');
-var redis=require('redis');
+const express = require('express');
+const path = require('path');
+const logger = require('morgan');
+const bodyParser = require('body-parser');
+const redis = require('redis');
+const useragent = require('express-useragent');
+const requestIp = require('request-ip');
+const esClient = require('./connection.js');
 
-var app=express();
-//create client
+const app = express();
+app.use(requestIp.mw());
+app.use(useragent.express());
+
+const bulkArticlesArray = [];
+
+
+// create client
 // var client=redis.createClient();
-var client = redis.createClient(6379,'3.131.254.70');
-client.on('connect',function(){
-    console.log("Redis server connected");
+const client = redis.createClient(6379, '3.131.254.70');
+client.on('connect', () => {
+  console.log('Redis server connected');
 });
-app.set('views',path.join(__dirname,'views'));
-app.set('view engine','ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended:false}));
-app.use(express.static(path.join(__dirname,'public')));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/',function(req,res){
+app.get('/', (req, res) => {
 //  res.send('Welcome!');
 
-
-    client.exists('bookss',function(err,reply){
-        if(reply===1){
-
-            client.hgetall('bookss', function(err,books){
-       
-                // console.log("done");
-                res.render('index',{ books:books, reply:reply});
-               
-               
-           
-          
-        });
-    
-        }
-        else{
-            console.log("empty");
-            res.render('index',{ reply:reply});
-        }
-
-    });
-
-
-});
-
-
-
-
-app.post('/book/add', function(req,res){
-var newBook={};
-newBook.id = req.body.id
-newBook.name=req.body.name;
-newBook.author=req.body.author;
-newBook.cost=req.body.cost;
-client.hmset('bookss',['name',newBook.name,'author', newBook.author, 'id', newBook.id, 'cost', newBook.cost], function(err, reply){
-if(err){
-    console.log(err);
-}
-console.log(reply);
-client.hmset('book:'+newBook.id, [
-    'name',newBook.name,'author', newBook.author, 'id', newBook.id, 'cost', newBook.cost
-  ], function(error, replyy){
-    if(err){
-      console.log(error);
+  client.exists('bookss', (err, reply) => {
+    if (reply === 1) {
+      client.hgetall('bookss', (err, books) => {
+        // console.log("done");
+        res.render('index', { books, reply });
+      });
+    } else {
+      console.log('empty');
+      res.render('index', { reply });
     }
-    console.log(replyy);
-    res.redirect('/');
   });
-
-});
 });
 
-app.post('/book/search', function(req, res, next){
-	console.log(req.body);
-  let id = req.body.id;
+app.post('/book/add', (req, res) => {
+  const newBook = {};
+  newBook.id = req.body.id;
+  newBook.name = req.body.name;
+  newBook.author = req.body.author;
+  newBook.cost = req.body.cost;
+  client.hmset('bookss', ['name', newBook.name, 'author', newBook.author, 'id', newBook.id, 'cost', newBook.cost], (err, reply) => {
+    if (err) {
+      console.log(err);
+    }
+    console.log(reply);
+    client.hmset(`book:${newBook.id}`, [
+      'name', newBook.name, 'author', newBook.author, 'id', newBook.id, 'cost', newBook.cost,
+    ], (error, replyy) => {
+      if (err) {
+        console.log(error);
+      }
+      console.log(replyy);
+      res.redirect('/');
+    });
+  });
+});
 
-  client.hgetall('book:'+id, function(err, obj){
-    if(!obj){
+app.post('/book/search', (req, res, next) => {
+  console.log(req.body);
+  const { id } = req.body;
+
+  client.hgetall(`book:${id}`, (err, obj) => {
+    if (!obj) {
     	// console.log('!obj');
       res.render('search', {
-        error: 'Book not found!!',books:''
+        error: 'Book not found!!', books: '',
       });
     } else {
     	// console.log('else')
       obj.id = id;
-    	console.log(obj)
+    	console.log(obj);
 
       res.render('search', {
-        book: obj,books:'exists',error:''
+        book: obj, books: 'exists', error: '',
       });
     }
   });
 });
 
+app.get('/search', (req, res) => {
+  res.render('search', {
+    error: '',
+    books: '',
+  });
+});
 
-app.get('/search', function(req, res){
-    res.render('search',{
-          error: '',
-          books:''
-        });
+app.post('/book/delete/:id', (req, res) => {
+  const { id } = req.params;
+  client.del(`book:${req.params.id}`);
+
+  console.log(typeof client.hget('bookss', 'id'));
+  client.hget('bookss', 'id', (err, reply) => {
+    if (id == reply) {
+      // console.log(reply)
+      // console.log('there');
+      client.del('bookss');
+    }
   });
 
-app.post('/book/delete/:id', function(req, res,){
-    let id=req.params.id
-    client.del('book:'+req.params.id);
-    
-    console.log(typeof client.hget('bookss','id'));
-    client.hget('bookss','id',function(err,reply){
-        if(id == reply){
-            // console.log(reply)
-      // console.log('there');
-        client.del('bookss')
-       
-        }
-    })
-  
-    res.redirect('/search');
-  }); 
-app.listen(3000);
+  res.redirect('/search');
+});
+
+app.get('/elastic', (req, res) => {
+  const IP = req.clientIp;
+  const userAgent = req.useragent.source;
+  //   const data = {
+  //     ip: IP,
+  //     useragent: userAgent,
+  //   };
+  bulkArticlesArray.push(
+    { index: { _index: 'conf', _type: 'userconf' } },
+    {
+      ip: IP,
+      useragent: userAgent,
+    },
+  );
+  esClient.bulk({
+    maxRetries: 5,
+    index: 'config',
+    type: 'userconf',
+    body: bulkArticlesArray,
+  }, (err, resp, status) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(resp.items);
+      res.send('Successful');
+    }
+  });
+});
+
+app.listen(5000);
 console.log('Server Started on Port 3000');
-module.exports=app;
+module.exports = app;
