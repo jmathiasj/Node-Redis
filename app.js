@@ -3,16 +3,8 @@ const path = require('path');
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 const redis = require('redis');
-const useragent = require('express-useragent');
-const requestIp = require('request-ip');
-const esClient = require('./connection.js');
 
 const app = express();
-app.use(requestIp.mw());
-app.use(useragent.express());
-
-const bulkArticlesArray = [];
-
 
 // create client
 // var client=redis.createClient();
@@ -111,35 +103,35 @@ app.post('/book/delete/:id', (req, res) => {
   res.redirect('/search');
 });
 
-app.get('/elastic', (req, res) => {
-  const IP = req.clientIp;
-  const userAgent = req.useragent.source;
-  //   const data = {
-  //     ip: IP,
-  //     useragent: userAgent,
-  //   };
-  bulkArticlesArray.push(
-    { index: { _index: 'conf', _type: 'userconf' } },
-    {
-      ip: IP,
-      useragent: userAgent,
-    },
-  );
-  esClient.bulk({
-    maxRetries: 5,
-    index: 'config',
-    type: 'userconf',
-    body: bulkArticlesArray,
-  }, (err, resp, status) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log(resp.items);
-      res.send('Successful');
-    }
-  });
-});
+// app.get('/elastic', (req, res) => {
+//   const IP = req.clientIp;
+//   const userAgent = req.useragent.source;
+//   //   const data = {
+//   //     ip: IP,
+//   //     useragent: userAgent,
+//   //   };
+//   bulkArticlesArray.push(
+//     { index: { _index: 'conf', _type: 'userconf' } },
+//     {
+//       ip: IP,
+//       useragent: userAgent,
+//     },
+//   );
+//   esClient.bulk({
+//     maxRetries: 5,
+//     index: 'config',
+//     type: 'userconf',
+//     body: bulkArticlesArray,
+//   }, (err, resp, status) => {
+//     if (err) {
+//       console.log(err);
+//     } else {
+//       console.log(resp.items);
+//       res.send('Successful');
+//     }
+//   });
+// });
 
 app.listen(5000);
-console.log('Server Started on Port 3000');
+console.log('Server Started on Port 5000');
 module.exports = app;
