@@ -8,7 +8,7 @@ const elasticsearch = require('elasticsearch');
 const requestIp = require('request-ip');
 
 const esClient = new elasticsearch.Client({
-  hosts: ['http://3.139.243.255:9200'], 
+  hosts: ['http://3.139.243.255:9200'],
 });
 
 const app = express();
