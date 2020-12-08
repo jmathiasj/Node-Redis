@@ -4,16 +4,17 @@ const logger = require('morgan');
 const bodyParser = require('body-parser');
 const redis = require('redis');
 const useragent = require('express-useragent');
+const elasticsearch = require('elasticsearch');
 const requestIp = require('request-ip');
-const esClient = require('./connection.js');
+
+const esClient = new elasticsearch.Client({
+  hosts: ['http://3.139.243.255:9200'], 
+});
 
 const app = express();
 app.use(requestIp.mw());
 app.use(useragent.express());
-const bulkArticlesArray = [];
 
-// create client
-// var client=redis.createClient();
 const client = redis.createClient(6379, '3.131.254.70');
 client.on('connect', () => {
   console.log('Redis server connected');
@@ -70,12 +71,10 @@ app.post('/book/search', (req, res, next) => {
 
   client.hgetall(`book:${id}`, (err, obj) => {
     if (!obj) {
-    	// console.log('!obj');
       res.render('search', {
         error: 'Book not found!!', books: '',
       });
     } else {
-    	// console.log('else')
       obj.id = id;
     	console.log(obj);
 
@@ -108,38 +107,27 @@ app.post('/book/delete/:id', (req, res) => {
 
   res.redirect('/search');
 });
-
 app.get('/elastic', (req, res) => {
   const IP = req.clientIp;
   const userAgent = req.useragent.source;
-  //   const data = {
-  //     ip: IP,
-  //     useragent: userAgent,
-  //   };
-  bulkArticlesArray.push(
-    { index: { _index: 'conf', _type: 'userconf' } },
-    {
+  esClient.index({
+    index: 'userconf',
+    body: {
       ip: IP,
       useragent: userAgent,
     },
-  );
-  esClient.bulk({
-    maxRetries: 1,
-    index: 'conf',
-    type: 'userconf',
-    body: bulkArticlesArray,
-  }, (err, resp, status) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log(resp.items);
-      res.send('Successful');
-    }
-  });
+  }).then((resp) => {
+    console.log('User config', resp);
+    res.send('succesful');
+  }).catch((err) => console.log('Error', err));
 });
+
 app.get('/search-ua/:ua', (req, res) => {
+  // Access title like this: req.params.title
+
+  /* Query using slop to allow for unexact matches */
   esClient.search({
-    index: 'conf',
+    index: 'userconf',
     // type: 'articles',
     body: {
       query: {
@@ -159,7 +147,7 @@ app.get('/search-ua/:ua', (req, res) => {
 });
 app.get('/search-ip/:ip', (req, res) => {
   esClient.search({
-    index: 'conf',
+    index: 'userconf',
     // type: 'articles',
     body: {
       query: {
@@ -177,6 +165,7 @@ app.get('/search-ip/:ip', (req, res) => {
     res.send(err.message);
   });
 });
+
 app.listen(5000);
 console.log('Server Started on Port 5000');
 module.exports = app;
